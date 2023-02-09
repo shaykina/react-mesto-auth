@@ -15,7 +15,7 @@ import Register from './Register.js';
 import InfoTooltip from './InfoTooltip.js';
 import ProtectedRouteElement from './ProtectedRoute.js';
 import { Link, Routes, Route, useNavigate } from 'react-router-dom';
-import * as auth from '../auth.js';
+import * as auth from '../utils/auth.js';
 import success from '../images/succes.svg';
 import fail from '../images/fail.svg';
 
@@ -33,10 +33,45 @@ function App() {
   const [isRegisterPopupOpen, setIsRegisterPopupOpen] = React.useState(false);
   const [link, setLink] = React.useState('');
   const [title, setTitle] = React.useState('');
+  const [loginInfo, setLoginInfo] = React.useState({
+    email: '',
+    password: ''
+  });
+  const [formValue, setFormValue] = React.useState({
+    email: '',
+    password: ''
+  });
 
   function handleLogin() {
-    setIsLoggedIn(true);
-    handleTokenCheck();
+    if (!loginInfo.email || !loginInfo.password) {
+      return;
+    }
+
+    auth.authorize(loginInfo.email, loginInfo.password)
+      .then((data) => {
+        if (data.token) {
+          setLoginInfo({ email: '', password: '' });
+          setIsLoggedIn(true);
+          handleTokenCheck();
+          navigate('/', { replace: true });
+        }
+      })
+      .catch((err) => {
+        handleRegisterFail();
+        console.log(err);
+      });
+  }
+
+  function handleRegister() {
+    auth.register(formValue.email, formValue.password)
+      .then(() => {
+        handleRegisterSuccess();
+        navigate('/signin', { replace: true });
+      })
+      .catch((err) => {
+        handleRegisterFail();
+        console.log(err);
+      });
   }
 
   function signOut() {
@@ -62,8 +97,8 @@ function App() {
   const navigate = useNavigate();
 
   function handleTokenCheck() {
-    if (localStorage.getItem('token')) {
-      const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    if (token) {
       auth.checkToken(token).then((res) => {
         setIsLoggedIn(true);
         navigate('/', { replace: true });
@@ -211,7 +246,7 @@ function App() {
                     <Link className="header__link" to="/signup">Регистрация</Link>
                   }
                 />
-                <Login handleLogin={handleLogin} />
+                <Login onLogin={handleLogin} loginInfo={loginInfo} setLoginInfo={setLoginInfo} />
               </div>} />
             <Route path="/signup" element={
               <div className="registerContainer">
@@ -220,7 +255,7 @@ function App() {
                     <Link className="header__link" to="/signin">Войти</Link>
                   }
                 />
-                <Register onSuccess={handleRegisterSuccess} onFail={handleRegisterFail} />
+                <Register onRegister={handleRegister} formValue={formValue} setFormValue={setFormValue} />
               </div>} />
             <Route path="/*" element={
               <ProtectedRouteElement isLoggedIn={isLoggedIn} element={

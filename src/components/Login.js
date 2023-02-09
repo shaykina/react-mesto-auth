@@ -1,14 +1,6 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import * as auth from '../auth.js';
 
-function Login({ handleLogin }) {
-  const [loginInfo, setLoginInfo] = React.useState({
-    email: '',
-    password: ''
-  });
-
-  const navigate = useNavigate();
+function Login({ onLogin, loginInfo, setLoginInfo }) {
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -20,19 +12,7 @@ function Login({ handleLogin }) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (!loginInfo.email || !loginInfo.password) {
-      return;
-    }
-
-    auth.authorize(loginInfo.email, loginInfo.password)
-      .then((data) => {
-        if (data.token) {
-          setLoginInfo({ email: '', password: '' });
-          handleLogin();
-          navigate('/', { replace: true });
-        }
-      })
-      .catch(err => console.log(err));
+    onLogin();
   }
 
   return (
@@ -46,7 +26,7 @@ function Login({ handleLogin }) {
             <span className="auth__error username-error"></span>
           </label>
           <label className="auth__field">
-            <input className="auth__input auth__input_type_login-password" type="text" name="password" value={loginInfo.password || ''} onChange={handleChange} id="password" placeholder="Пароль"
+            <input className="auth__input auth__input_type_login-password" type="password" name="password" value={loginInfo.password || ''} onChange={handleChange} id="password" placeholder="Пароль"
               minLength="2" maxLength="40" required />
             <span className="auth__error password-error"></span>
           </label>
